@@ -1,20 +1,13 @@
-# Use an official OpenJDK 21 runtime as a parent image
-FROM eclipse-temurin:21-jdk
-
-LABEL maintainer="Chandra Prakash"
-LABEL version="1.0"
-LABEL description="Dockerfile to run a Spring Boot application"
-LABEL usage="docker build -t <image-name> ."
-LABEL usage="docker run -p 8080:8080 <image-name>"
-
-# Set the working directory inside the container
+# Stage 1: Build the jar with Maven
+FROM maven:3.9.4-eclipse-temurin-21 as builder
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean install
 
-# Copy the application's JAR file
-COPY target/*.jar app.jar
-
-# Expose the application port
+# Stage 2: Run the app
+FROM eclipse-temurin:21-jdk
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8080
-
-# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
